@@ -1,0 +1,12 @@
+package pages
+
+import (
+    "github.com/ni3mm4nd/ssl-expiry-checker/internal/templates/shared"
+    "github.com/ni3mm4nd/ssl-expiry-checker/internal/templates/partials"
+)
+
+templ ConfigPage() {
+    @shared.Page("Config") {
+        @partials.ConfigMain()
+    }
+}

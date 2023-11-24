@@ -1,0 +1,25 @@
+package partials
+
+templ ConfigMain() {
+  <section id="main" hx-get="/config/view" hx-trigger="load" hx-swap="outerHTML">
+    <p>Loading...</p>
+  </section>
+}
+
+templ ShowConfig(content string, err string) {
+    <section id="main">
+        if err != "" {
+            <p>ERROR: { err }</p>
+        }
+        <textarea readonly id="content" rows="4" oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Write your config here...">{ content }</textarea>
+
+        <script type="text/javascript">
+            function setHeight(fieldId){
+                document.getElementById(fieldId).style.height = document.getElementById(fieldId).scrollHeight+'px';
+            }
+            setHeight('content');
+        </script>
+    </section>
+
+
+}

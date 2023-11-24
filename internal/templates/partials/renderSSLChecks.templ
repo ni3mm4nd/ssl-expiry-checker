@@ -1,0 +1,195 @@
+package partials
+
+import (
+    "fmt"
+    "time"
+    "strings"
+    "github.com/ni3mm4nd/ssl-expiry-checker/internal/domain/sslcheck"
+)
+
+templ RenderSSLCheckTable(check sslcheck.SSLCheck) {
+    <table id={ fmt.Sprintf("table%s", fmt.Sprintf("%s", strings.ReplaceAll(check.TargetURL, ".", ""))) }>
+        <tr><td style="padding-right: 20px;">Last Check</td><td>{ check.LastCheck.Format(time.RFC3339) }</td></tr>
+        <tr><td>Expiry</td><td>{ check.Expiry.Format(time.RFC3339) }</td></tr>
+        <tr><td>Days Left</td><td>{ fmt.Sprintf("%d", check.DaysLeft) }</td></tr>
+    if check.Error != "" {
+        <tr><td>Error</td><td>{ check.Error }</td></tr>
+    }
+    </table>
+}
+
+templ RenderSSLCheckRecheckButton(check sslcheck.SSLCheck) {
+    <button style="margin: 10px;"
+            hx-indicator=".loading"
+            hx-get={ "/sslchecks/check/" + check.TargetURL }
+            hx-target={ "#table" + fmt.Sprintf("%s", strings.ReplaceAll(check.TargetURL, ".", ""))}
+            hx-swap="outerHTML"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        &#x27F3;
+            <span class="loading">...</span>
+    </button>
+}
+
+templ RenderSSLCheckDeleteButton(check sslcheck.SSLCheck) {
+    <button style="margin: 10px;"
+            hx-confirm="Are you sure you want to DELETE?"
+            hx-indicator=".loading"
+            hx-delete={ "/sslchecks/" + check.TargetURL }
+            hx-target="#sslchecks"
+            hx-swap="outerHTML"
+            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+        x
+            <span class="loading">...</span>
+    </button>
+}
+
+templ RenderSSLCheckAddForm() {
+  <div style="border-width: thick;">
+    <form hx-post="/sslchecks" hx-target="#sslchecks">
+      <label for="url">
+        URL
+      </label>
+      <input id="url" name="url" type="text"/>
+      <input type="submit" value="Add" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"/>
+    </form>
+  </div>
+}
+
+templ RenderDefault() {
+  <section id="sslchecks" hx-get="/sslchecks/view" hx-trigger="load" hx-swap="outerHTML">
+    <p>Loading...</p>
+  </section>
+}
+
+templ RenderSSLChecks(sslchecks []sslcheck.SSLCheck, err string) {
+
+<section id="sslchecks">
+
+if err != "" {
+<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+  <strong class="font-bold">ERROR</strong>
+  <span class="block sm:inline">{ err }</span>
+</div>
+  <br></br>
+}
+
+<style>
+  #refreshBtn.htmx-request {
+    opacity: .5;
+    transition: opacity 300ms linear;
+  }
+
+  .loading {
+    opacity: 0;
+    display: none;
+    transition: opacity 100ms ease-in;
+  }
+
+  .loading.htmx-request {
+    opacity: 1;
+    display: inline;
+    transition: opacity 100ms ease-in;
+  }
+</style>
+
+    <button id="refreshBtn" 
+        hx-indicator=".loading" 
+        hx-get="/sslchecks/rescan" 
+        hx-swap="outerHTML swap:1s" 
+        hx-target="#sslchecks" 
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+    &#x27F3; Rescan All
+        <span class="loading">...</span>
+    </button>
+
+    <br></br>
+    <br></br>
+
+    if len(sslchecks) == 0 {
+        <h3 style="text-align: center;">No targets! Please add some.</h3>
+    }
+    for _, check := range sslchecks {
+        if check.DaysLeft < 10 && check.DaysLeft > 0 { 
+            <button class="accordion" style="background-color: yellow;">{ check.TargetURL } [{ fmt.Sprintf("%d", check.DaysLeft) }]</button>
+        } else if check.DaysLeft > 10 {
+            <button class="accordion" style="background-color: lightgreen;">{ check.TargetURL } [{ fmt.Sprintf("%d", check.DaysLeft) }]</button>
+        } else {
+            <button class="accordion" style="background-color: indianred; color: wheat;">{ check.TargetURL } [{ fmt.Sprintf("%d", check.DaysLeft) }]</button>
+        }
+
+        <div class="panel">
+            @RenderSSLCheckTable(check)
+            @RenderSSLCheckRecheckButton(check)
+            @RenderSSLCheckDeleteButton(check)
+        </div>
+    }
+        @RenderSSLCheckAddForm()
+
+    <br></br>
+    <br></br>
+
+
+</section>
+
+    <style>
+/* Style the buttons that are used to open and close the accordion panel */
+.accordion {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  outline: none;
+  transition: 0.4s;
+}
+
+/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+.active, .accordion:hover {
+  background-color: #ccc;
+}
+
+/* Style the accordion panel. Note: hidden by default */
+.panel {
+  padding: 0 18px;
+  background-color: white;
+  display: none;
+  overflow: hidden;
+}
+
+.accordion:after {
+  content: "\02795"; /* Unicode character for "plus" sign (+) */
+  font-size: 13px;
+  color: #777;
+  float: right;
+  margin-left: 5px;
+}
+
+.active:after {
+  content: "\2796"; /* Unicode character for "minus" sign (-) */
+}
+
+    </style>
+
+    <script>
+    var acc = document.getElementsByClassName("accordion");
+var i;
+
+for (i = 0; i < acc.length; i++) {
+  acc[i].addEventListener("click", function() {
+    /* Toggle between adding and removing the "active" class,
+    to highlight the button that controls the panel */
+    this.classList.toggle("active");
+
+    /* Toggle between hiding and showing the active panel */
+    var panel = this.nextElementSibling;
+    if (panel.style.display === "block") {
+      panel.style.display = "none";
+    } else {
+      panel.style.display = "block";
+    }
+  });
+}
+</script>
+}
