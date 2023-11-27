@@ -1,0 +1,13 @@
+package partials
+
+templ RenderNextCheckTime() {
+    <div id="nextchecktime" hx-get="/sslchecks/nextcheck" hx-trigger="load" hx-swap="outerHTML">
+        <p>Next check time: loading...</p>
+    </div>
+}
+
+templ RenderNextCheckTimePartial(date string) {
+    <div id="nextchecktime">
+        <p>Next check time: { date }</p>
+    </div>
+}

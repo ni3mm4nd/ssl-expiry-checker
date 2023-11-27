@@ -34,6 +34,7 @@ func main() {
 	r.Post("/sslchecks", partials.AddSSLCheck)
 	r.Get("/config", configview.Config)
 	r.Get("/config/view", partials.GetConfig)
+	r.Get("/sslchecks/nextcheck", partials.ShowNextCheckTime)
 
 	server := &http.Server{
 		Addr:    port,
