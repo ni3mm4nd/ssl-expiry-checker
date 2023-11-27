@@ -1,3 +1,4 @@
+bin/*
 ssl-expiry-checker.conf
 sslchecks.json
 *_templ.go
