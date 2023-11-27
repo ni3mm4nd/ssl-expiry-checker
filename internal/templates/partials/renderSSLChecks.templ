@@ -21,7 +21,7 @@ templ RenderSSLCheckTable(check sslcheck.SSLCheck) {
 templ RenderSSLCheckRecheckButton(check sslcheck.SSLCheck) {
     <button style="margin: 10px;"
             hx-indicator=".loading"
-            hx-get={ "/sslchecks/check/" + check.TargetURL }
+            hx-get={ "sslchecks/check/" + check.TargetURL }
             hx-target={ "#table" + fmt.Sprintf("%s", strings.ReplaceAll(check.TargetURL, ".", ""))}
             hx-swap="outerHTML"
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
@@ -34,7 +34,7 @@ templ RenderSSLCheckDeleteButton(check sslcheck.SSLCheck) {
     <button style="margin: 10px;"
             hx-confirm="Are you sure you want to DELETE?"
             hx-indicator=".loading"
-            hx-delete={ "/sslchecks/" + check.TargetURL }
+            hx-delete={ "sslchecks/" + check.TargetURL }
             hx-target="#sslchecks"
             hx-swap="outerHTML"
             class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
@@ -45,7 +45,7 @@ templ RenderSSLCheckDeleteButton(check sslcheck.SSLCheck) {
 
 templ RenderSSLCheckAddForm() {
   <div style="border-width: thick;">
-    <form hx-post="/sslchecks" hx-target="#sslchecks">
+    <form hx-post="sslchecks" hx-target="#sslchecks">
       <label for="url">
         URL
       </label>
@@ -56,7 +56,7 @@ templ RenderSSLCheckAddForm() {
 }
 
 templ RenderDefault() {
-  <section id="sslchecks" hx-get="/sslchecks/view" hx-trigger="load" hx-swap="outerHTML">
+  <section id="sslchecks" hx-get="sslchecks/view" hx-trigger="load" hx-swap="outerHTML">
     <p>Loading...</p>
   </section>
 }
@@ -94,7 +94,7 @@ if err != "" {
 
     <button id="refreshBtn" 
         hx-indicator=".loading" 
-        hx-get="/sslchecks/rescan" 
+        hx-get="sslchecks/rescan" 
         hx-swap="outerHTML swap:1s" 
         hx-target="#sslchecks" 
         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
