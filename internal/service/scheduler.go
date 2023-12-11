@@ -39,7 +39,7 @@ type NetworkConnector interface {
 type RealNetworkConnector struct{}
 
 func (rnc RealNetworkConnector) Dial(network, address string) (net.Conn, error) {
-	dialer := &net.Dialer{Timeout: 3 * time.Second}
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
