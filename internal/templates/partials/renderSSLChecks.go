@@ -1,7 +1,10 @@
 package partials
 
 import (
+	"errors"
+	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/go-chi/chi"
 	"github.com/ni3mm4nd/ssl-expiry-checker/internal/domain/sslcheck"
@@ -60,6 +63,13 @@ func AddSSLCheck(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	target := r.Form.Get("url")
 	checks, _ := repository.GetRepos().SSLCheckRepo.ReadAll()
+	target, err := formatURL(target)
+	if err != nil {
+		if err := RenderSSLChecks(checks, "Can not format URL").Render(r.Context(), w); err != nil {
+			w.Write([]byte(err.Error()))
+		}
+		return
+	}
 	if target == "" {
 		if err := RenderSSLChecks(checks, "target can not be empty").Render(r.Context(), w); err != nil {
 			w.Write([]byte(err.Error()))
@@ -78,4 +88,19 @@ func AddSSLCheck(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 	}
 
+}
+
+func formatURL(targetURL string) (string, error) {
+	parsedURL, err := url.Parse(targetURL)
+	if err != nil {
+		log.Println(parsedURL)
+		return "", errors.New("cannot parse URL")
+	}
+	if parsedURL.Scheme == "https" {
+		targetURL = parsedURL.Host
+	}
+	if parsedURL.Scheme == "" {
+		targetURL = parsedURL.Path
+	}
+	return targetURL, nil
 }

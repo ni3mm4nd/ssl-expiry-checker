@@ -57,7 +57,7 @@ func formatURL(targetURL string) (string, error) {
 	parsedURL, err := url.Parse(targetURL)
 	if err != nil {
 		log.Println(parsedURL)
-		return "", errors.New("Cannot parse URL")
+		return "", errors.New("cannot parse URL")
 	}
 	if parsedURL.Scheme == "https" {
 		targetURL = parsedURL.Host + ":443"
