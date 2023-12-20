@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -158,41 +159,48 @@ func CheckTarget(target string) {
 func CheckTargets(targets []string) {
 	log.Printf("Checking SSL certificates: %v\n", targets)
 	results := make([]sslcheck.SSLCheck, 0)
+	var wg sync.WaitGroup
 
 	// Check SSL certificates for each target
 	for _, target := range targets {
-		sslCheck := sslcheck.SSLCheck{
-			TargetURL: target,
-			LastCheck: time.Now(),
-			Error:     "",
-		}
-		formattedURL, err := formatURL(target)
-		if err != nil {
-			log.Println("Error:", err)
-			sslCheck.Error = err.Error()
+		wg.Add(1)
+		go func(target string) {
+			defer wg.Done()
+			sslCheck := sslcheck.SSLCheck{
+				TargetURL: target,
+				LastCheck: time.Now(),
+				Error:     "",
+			}
+			formattedURL, err := formatURL(target)
+			if err != nil {
+				log.Println("Error:", err)
+				sslCheck.Error = err.Error()
+				results = append(results, sslCheck)
+				return
+			}
+			conn, err := dialNetwork(formattedURL, RealNetworkConnector{})
+			if err != nil {
+				log.Println("Error:", err)
+				sslCheck.Error = err.Error()
+				results = append(results, sslCheck)
+				return
+			}
+			defer conn.Close()
+			expiryDate, err := getCertificateExpiryDate(conn)
+			if err != nil {
+				log.Println("Error:", err)
+				sslCheck.Error = err.Error()
+				results = append(results, sslCheck)
+				return
+			}
+			remainingDays := calculateRemainingDays(expiryDate)
+			sslCheck.Expiry = expiryDate
+			sslCheck.DaysLeft = remainingDays
 			results = append(results, sslCheck)
-			continue
-		}
-		conn, err := dialNetwork(formattedURL, RealNetworkConnector{})
-		if err != nil {
-			log.Println("Error:", err)
-			sslCheck.Error = err.Error()
-			results = append(results, sslCheck)
-			continue
-		}
-		defer conn.Close()
-		expiryDate, err := getCertificateExpiryDate(conn)
-		if err != nil {
-			log.Println("Error:", err)
-			sslCheck.Error = err.Error()
-			results = append(results, sslCheck)
-			continue
-		}
-		remainingDays := calculateRemainingDays(expiryDate)
-		sslCheck.Expiry = expiryDate
-		sslCheck.DaysLeft = remainingDays
-		results = append(results, sslCheck)
+		}(target)
 	}
+
+	wg.Wait()
 
 	for _, result := range results {
 		err := repository.GetRepos().SSLCheckRepo.Write(result)
